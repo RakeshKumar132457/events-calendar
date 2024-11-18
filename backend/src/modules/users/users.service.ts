@@ -20,7 +20,7 @@ export class UsersService {
   ) {}
 
   async findAll(): Promise<User[]> {
-    const users = await this.userRepository.findAll({ where: { status: 1 } });
+    const users = await this.userRepository.find({ status: 1 });
     if (!users?.length) {
       throw new NotFoundException('Users not found');
     }
@@ -61,6 +61,7 @@ export class UsersService {
     if (updateUserDto.lastName) user.lastName = updateUserDto.lastName;
     if (updateUserDto.isGoogleCalendarEnabled)
       user.isGoogleCalendarEnabled = updateUserDto.isGoogleCalendarEnabled;
+    this.em.assign(user, updateUserDto);
     await this.em.flush();
     return user;
   }

@@ -6,11 +6,18 @@ import {
   Patch,
   Param,
   Delete,
+  HttpStatus,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+  ApiParam,
+  ApiBody,
+} from '@nestjs/swagger';
 import { User } from './entities/user.entity';
 
 @ApiTags('users')
@@ -18,47 +25,103 @@ import { User } from './entities/user.entity';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post('register')
-  @ApiOperation({ summary: 'Register a new user' })
+  @Get()
+  @ApiOperation({ summary: 'Get all users' })
   @ApiResponse({
-    status: 201,
-    description: 'User successfully created',
-    type: User,
+    status: HttpStatus.OK,
+    description: 'Users retrieved successfully',
+    type: [User],
   })
-  @ApiResponse({ status: 409, description: 'User already exists' })
-  register(@Body() createUserDto: CreateUserDto): Promise<User> {
-    return this.usersService.create(createUserDto);
+  async findAll(): Promise<User[]> {
+    return await this.usersService.findAll();
   }
 
-  @Get('/')
-  @ApiOperation({ summary: 'Get user profile' })
+  @Post()
+  @ApiOperation({ summary: 'Create new user' })
+  @ApiBody({ type: CreateUserDto })
   @ApiResponse({
-    status: 200,
-    description: 'Profile retreived successfully',
+    status: HttpStatus.CREATED,
+    description: 'User created successfully',
     type: User,
   })
-  async getUsers(): Promise<User[]> {
-    return this.usersService.findAll();
+  @ApiResponse({
+    status: HttpStatus.CONFLICT,
+    description: 'User already exists',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input data',
+  })
+  async create(@Body() createUserDto: CreateUserDto): Promise<User> {
+    return await this.usersService.create(createUserDto);
   }
 
-  @Get('profile/:id')
-  @ApiOperation({ summary: 'Get user profile' })
+  @Get(':id')
+  @ApiOperation({ summary: 'Get user by ID' })
+  @ApiParam({
+    name: 'id',
+    type: 'number',
+    description: 'User ID',
+    required: true,
+  })
   @ApiResponse({
-    status: 200,
-    description: 'Profile retreived successfully',
+    status: HttpStatus.OK,
+    description: 'User retrieved successfully',
     type: User,
   })
-  async getProfile(@Param('id') id: number): Promise<User> {
-    return this.usersService.findOne(+id);
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'User not found',
+  })
+  async findOne(@Param('id') id: number): Promise<User> {
+    return await this.usersService.findOne(+id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(+id, updateUserDto);
+  @ApiOperation({ summary: 'Update user partially' })
+  @ApiParam({
+    name: 'id',
+    type: 'number',
+    description: 'User ID',
+  })
+  @ApiBody({ type: UpdateUserDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User updated successfully',
+    type: User,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'User not found',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid update data',
+  })
+  async update(
+    @Param('id') id: string,
+    @Body() updateUserDto: UpdateUserDto,
+  ): Promise<User> {
+    return await this.usersService.update(+id, updateUserDto);
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    return this.usersService.remove(+id);
+  @ApiOperation({ summary: 'Delete user' })
+  @ApiParam({
+    name: 'id',
+    type: 'number',
+    description: 'User ID',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User deleted successfully',
+    type: User,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'User not found',
+  })
+  async remove(@Param('id') id: string): Promise<string> {
+    return await this.usersService.remove(+id);
   }
 }

@@ -4,8 +4,7 @@ import { AppService } from './app.service';
 import { UsersModule } from './modules/users/users.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { PostgreSqlDriver } from '@mikro-orm/postgresql';
-import { User } from '@modules/users/entities/user.entity';
+import { getMikroOrmConfig } from '@config/mikro-orm.config';
 
 @Module({
   imports: [
@@ -15,17 +14,8 @@ import { User } from '@modules/users/entities/user.entity';
     }),
     MikroOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService) => ({
-        driver: PostgreSqlDriver,
-        host: configService.get('DB_HOST'),
-        port: configService.get('DB_PORT'),
-        user: configService.get('DB_USER'),
-        password: configService.get('DB_PASSWORD'),
-        dbName: configService.get('DB_NAME'),
-        entities: [User],
-        entitiesTs: ['./src/entities'],
-        debug: true,
-      }),
+      useFactory: (configService: ConfigService) =>
+        getMikroOrmConfig(configService),
       inject: [ConfigService],
     }),
     UsersModule,
